@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>English Dept - Group B</title>
+    <style>
+        :root { --main: #1a1a2e; --accent: #00d2ff; --danger: #e94560; --success: #2ecc71; --glass: rgba(255,255,255,0.08); }
+        body { font-family: -apple-system, sans-serif; background: #0f3460; margin: 0; color: white; }
+        .app { width: 100%; max-width: 500px; min-height: 100vh; background: #1a1a2e; margin: 0 auto; position: relative; padding-bottom: 80px; box-shadow: 0 0 30px rgba(0,0,0,0.5); }
+        .header { padding: 25px; background: var(--glass); backdrop-filter: blur(10px); border-bottom: 2px solid var(--accent); text-align: center; }
+        .header h1 { margin: 0; font-size: 18px; color: var(--accent); }
+        .page { display: none; padding: 15px; animation: fadeIn 0.3s ease; }
+        .active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .card { background: var(--glass); border-radius: 15px; padding: 15px; margin-bottom: 12px; border: 1px solid rgba(255,255,255,0.1); position: relative; }
+        .btn-del { background: var(--danger); color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 10px; cursor: pointer; float: left; }
+        table { width: 100%; border-collapse: collapse; background: var(--glass); border-radius: 10px; overflow: hidden; font-size: 13px; margin-top: 10px; }
+        th, td { padding: 12px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        th { background: rgba(0,210,255,0.2); color: var(--accent); }
+        .status-done { background: var(--success); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+        .status-wait { background: #f1c40f; color: #1a1a2e; padding: 2px 8px; border-radius: 10px; font-size: 10px; }
+        .time-note { background: rgba(233, 69, 96, 0.15); border: 1px solid var(--danger); padding: 12px; border-radius: 10px; font-size: 11px; margin-bottom: 15px; color: #ffbcbc; line-height: 1.6; }
+        .admin-zone { background: #16213e; padding: 15px; border-radius: 15px; margin-top: 10px; border: 1px dashed var(--accent); }
+        input, textarea, select { width: 100%; padding: 12px; margin: 5px 0; border-radius: 8px; border: none; background: #0f3460; color: white; outline: none; }
+        .btn-main { background: var(--accent); color: #1a1a2e; border: none; padding: 12px; width: 100%; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; height: 65px; background: rgba(26, 26, 46, 0.98); display: flex; justify-content: space-around; align-items: center; border-top: 1px solid rgba(255,255,255,0.1); z-index: 100; }
+        .nav-item { text-align: center; opacity: 0.4; font-size: 10px; cursor: pointer; color: white; }
+        .nav-active { opacity: 1; color: var(--accent); }
+    </style>
+</head>
+<body>
+
+<div class="app">
+    <div class="header">
+        <h1>قسم اللغة الانكليزية - جروب B 🎓</h1>
+        <p style="font-size:10px; opacity:0.6">كلية مزايا الجامعة</p>
+    </div>
+
+    <div id="newsPage" class="page active">
+        <h3>آخر التبليغات 📢</h3>
+        <div id="newsList"></div>
+    </div>
+
+    <div id="docsPage" class="page">
+        <h3>المكتبة والملخصات 📚</h3>
+        <div id="docsList"></div>
+    </div>
+
+    <div id="tablePage" class="page">
+        <h3>الجدول الأسبوعي 🗓️</h3>
+        <div id="weekTable"></div>
+        <hr style="opacity:0.1; margin:25px 0;">
+        <h3>جدول امتحانات الـ Mid 📝</h3>
+        <div class="time-note">
+            ⚠️ <b>تنبيه:</b> الوقت الرسمي للامتحانات هو الساعة <b>11:00 صباحاً</b>، ولكن قد يطرأ تغيير حسب القسم. يرجى متابعة التبليغات الرسمية.
+        </div>
+        <div id="midTable"></div>
+    </div>
+
+    <div id="adminPage" class="page">
+        <div id="lockArea">
+            <h3>دخول الأدمن 🔐</h3>
+            <input type="password" id="adminPass" placeholder="كلمة السر">
+            <button class="btn-main" onclick="unlockAdmin()">دخول</button>
+        </div>
+        <div id="controlPanel" style="display:none">
+            <div class="admin-zone">
+                <b>نشر تبليغ:</b>
+                <textarea id="msgIn" placeholder="نص التبليغ..."></textarea>
+                <button class="btn-main" onclick="addItem('announcements', {text: document.getElementById('msgIn').value})">نشر</button>
+            </div>
+            <div class="admin-zone">
+                <b>إضافة ملف PDF:</b>
+                <input id="docTit" placeholder="اسم المادة">
+                <input id="docUrl" placeholder="رابط الملف">
+                <button class="btn-main" onclick="addItem('library', {name: document.getElementById('docTit').value, url: document.getElementById('docUrl').value})">حفظ</button>
+            </div>
+            <div class="admin-zone">
+                <b>تحديث الجدول (التحكم بالترتيب):</b>
+                <select id="tabType">
+                    <option value="weekly">جدول أسبوعي</option>
+                    <option value="mid">جدول المد</option>
+                </select>
+                <input id="orderIn" type="number" placeholder="رقم الترتيب (مثلاً 1 للأول، 2 للثاني)">
+                <input id="dayIn" placeholder="التاريخ أو اليوم">
+                <input id="subIn" placeholder="اسم المادة">
+                <input id="timeIn" placeholder="الوقت">
+                <button class="btn-main" onclick="addTable()">تحديث الجدول</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav">
+        <div class="nav-item nav-active" onclick="showTab('newsPage', this)">📢<br>التبليغات</div>
+        <div class="nav-item" onclick="showTab('docsPage', this)">📚<br>المكتبة</div>
+        <div class="nav-item" onclick="showTab('tablePage', this)">🗓️<br>الجداول</div>
+        <div class="nav-item" onclick="showTab('adminPage', this)">⚙️<br>الإدارة</div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, query, onSnapshot, serverTimestamp, orderBy, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB5ZaxsVDxqawRSyDXoV4oIyKoV95nmy_k",
+      authDomain: "ahmed-test-app-b5ad4.firebaseapp.com",
+      projectId: "ahmed-test-app-b5ad4",
+      storageBucket: "ahmed-test-app-b5ad4.firebasestorage.app",
+      messagingSenderId: "787507366467",
+      appId: "1:787507366467:web:ada6d598f2b74b3d4662f6"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    let isAdmin = false;
+
+    window.unlockAdmin = () => {
+        if(document.getElementById('adminPass').value === "ahmed2026") {
+            isAdmin = true;
+            document.getElementById('lockArea').style.display='none';
+            document.getElementById('controlPanel').style.display='block';
+            loadAll();
+        } else { alert("كلمة السر خطأ!"); }
+    };
+
+    function loadAll() {
+        onSnapshot(query(collection(db, "announcements"), orderBy("time", "desc")), (s) => {
+            let h = "";
+            s.forEach(d => {
+                h += `<div class="card">${isAdmin ? `<button class="btn-del" onclick="window.delItem('announcements','${d.id}')">حذف</button>` : ''}<b>📢 تبليغ</b><p>${d.data().text}</p></div>`;
+            });
+            document.getElementById('newsList').innerHTML = h || "لا توجد تبليغات حالياً";
+        });
+
+        onSnapshot(collection(db, "library"), (s) => {
+            let h = "";
+            s.forEach(d => {
+                h += `<div class="card">${isAdmin ? `<button class="btn-del" onclick="window.delItem('library','${d.id}')">حذف</button>` : ''}<b>📕 ${d.data().name}</b><br><a href="${d.data().url}" target="_blank" style="color:var(--accent); font-size:12px;">عرض الملف</a></div>`;
+            });
+            document.getElementById('docsList').innerHTML = h || "المكتبة فارغة";
+        });
+
+        // جلب الجداول مع ترتيبها حسب حقل 'order'
+        onSnapshot(query(collection(db, "tables"), orderBy("order", "asc")), (s) => {
+            let week = "<table><tr><th>اليوم</th><th>المادة</th><th>الوقت</th><th></th></tr>";
+            let mid = "<table><tr><th>التاريخ</th><th>المادة</th><th>الحالة</th><th></th></tr>";
+            s.forEach(d => {
+                const data = d.data();
+                const isDone = data.status === 'done';
+                if(data.type === 'weekly') {
+                    week += `<tr><td>${data.day}</td><td>${data.sub}</td><td>${data.time}</td><td>${isAdmin ? `<span onclick="window.delItem('tables','${d.id}')" style="color:red;cursor:pointer">✖</span>` : ''}</td></tr>`;
+                } else {
+                    mid += `<tr><td>${data.day}</td><td>${data.sub}</td><td><span class="${isDone ? 'status-done' : 'status-wait'}">${isDone ? 'تمت ✅' : 'قادمة ⏳'}</span>${isAdmin ? `<br><button onclick="window.toggleStatus('${d.id}', '${data.status}')" style="font-size:8px;margin-top:4px;">تبديل</button>` : ''}</td><td>${isAdmin ? `<span onclick="window.delItem('tables','${d.id}')" style="color:red;cursor:pointer">✖</span>` : ''}</td></tr>`;
+                }
+            });
+            document.getElementById('weekTable').innerHTML = week + "</table>";
+            document.getElementById('midTable').innerHTML = mid + "</table>";
+        });
+    }
+
+    window.addItem = async (coll, data) => {
+        await addDoc(collection(db, coll), {...data, time: serverTimestamp()});
+        alert("تمت الإضافة!");
+    };
+
+    window.addTable = async () => {
+        const d = { 
+            type: document.getElementById('tabType').value, 
+            order: parseInt(document.getElementById('orderIn').value) || 99,
+            day: document.getElementById('dayIn').value, 
+            sub: document.getElementById('subIn').value, 
+            time: document.getElementById('timeIn').value,
+            status: 'wait'
+        };
+        await window.addItem('tables', d);
+    };
+
+    window.toggleStatus = async (id, current) => {
+        await updateDoc(doc(db, "tables", id), { status: current === 'done' ? 'wait' : 'done' });
+    };
+
+    window.delItem = async (coll, id) => {
+        if(confirm("هل أنت متأكد من الحذف؟")) await deleteDoc(doc(db, coll, id));
+    };
+
+    window.showTab = (id, el) => {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('nav-active'));
+        el.classList.add('nav-active');
+    };
+    loadAll();
+</script>
+</body>
+</html>
